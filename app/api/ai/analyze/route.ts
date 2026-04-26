@@ -78,35 +78,35 @@ The message should apologize for the delay, briefly mention the reason without s
       return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    return NextResponse.json({ analysis: text, model: "gemini-flash-latest" });
+    return NextResponse.json({ analysis: text, model: "gemini-1.5-pro" });
   } catch (e: any) {
     // console.error("Gemini error:", e?.message ?? e); // Muted to keep terminal clean during mock fallback mode
-    
+
     // Fallback Mock Response for demo purposes if API key is invalid/missing
     let mockText = "AI analysis temporarily unavailable.";
-    
+
     if (mode === "bulk") {
-        const t = context;
-        mockText = t.prediction?.delay_probability > 0.5 
-            ? `High risk of delay detected due to ${t.weather_condition}. Recommend rerouting immediately to avoid the impacted zones.`
-            : `Route is currently stable. Proceed on the current path, but monitor traffic near ${t.destination}.`;
+      const t = context;
+      mockText = t.prediction?.delay_probability > 0.5
+        ? `High risk of delay detected due to ${t.weather_condition}. Recommend rerouting immediately to avoid the impacted zones.`
+        : `Route is currently stable. Proceed on the current path, but monitor traffic near ${t.destination}.`;
     } else if (mode === "parcel") {
-        const top = context?.routes?.[0];
-        mockText = top?.delay_risk?.probability > 0.5
-            ? `The primary route has high delay risk. Consider the alternative path to ensure on-time delivery despite the higher cost.`
-            : `The primary route through ${top?.path?.[1] || 'hub'} is optimal. It offers the best balance of low risk and cost efficiency.`;
+      const top = context?.routes?.[0];
+      mockText = top?.delay_risk?.probability > 0.5
+        ? `The primary route has high delay risk. Consider the alternative path to ensure on-time delivery despite the higher cost.`
+        : `The primary route through ${top?.path?.[1] || 'hub'} is optimal. It offers the best balance of low risk and cost efficiency.`;
     } else if (mode === "customer_update") {
-        const t = context;
-        mockText = `We apologize for the delay of your ${t.cargo} shipment to ${t.destination}. It is currently facing a slight delay due to ${t.weather_condition}. Our team is actively managing the route to ensure it reaches you safely and as soon as possible.`;
+      const t = context;
+      mockText = `We apologize for the delay of your ${t.cargo} shipment to ${t.destination}. It is currently facing a slight delay due to ${t.weather_condition}. Our team is actively managing the route to ensure it reaches you safely and as soon as possible.`;
     }
 
-    return NextResponse.json({ 
-        analysis: `${mockText} (Simulated Analysis - Invalid API Key)`, 
-        model: "mock-gemini" 
+    return NextResponse.json({
+      analysis: `${mockText} (Simulated Analysis - Invalid API Key)`,
+      model: "mock-gemini"
     });
   }
 }
