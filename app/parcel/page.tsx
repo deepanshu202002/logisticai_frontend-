@@ -8,6 +8,7 @@ import MapView from "@/components/MapView";
 import StatsPanel from "@/components/StatsPanel";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useRef } from "react";
 
 const API_BASE = "/api";
 
@@ -43,6 +44,7 @@ export default function ParcelPage() {
   const [loading, setLoading]         = useState(false);
   const [stormActive, setStormActive] = useState(false);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     try {
@@ -79,6 +81,11 @@ export default function ParcelPage() {
       setRouteResult(res.data);
       setSelectedRoute(res.data.routes?.[0] ?? null);
       
+      // Auto-scroll on mobile
+      if (window.innerWidth < 1024) {
+        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      }
+
       // Fetch AI Recommendation
       try {
         setAiRecommendation(null);
@@ -160,7 +167,7 @@ export default function ParcelPage() {
   const overloadedHubs = hubs.filter(h => (h.current_load/h.capacity) > 0.85);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-48px)] overflow-hidden bg-gray-950 text-white">
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-gray-950 text-white">
 
       {/* TOP: Hub Status Strip */}
       <div className="h-16 border-b border-gray-800 bg-gray-900 flex items-center px-4 gap-3 shrink-0 overflow-x-auto">
@@ -199,11 +206,11 @@ export default function ParcelPage() {
         </div>
       </div>
 
-      {/* MAIN: 3-column layout */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* MAIN: Responsive Layout */}
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
 
         {/* LEFT: Route Planner */}
-        <div className="w-72 border-r border-gray-800 flex flex-col bg-gray-900 shrink-0">
+        <div className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-gray-800 flex flex-col bg-gray-900 shrink-0 h-auto lg:h-full">
           <div className="p-4 border-b border-gray-800 bg-gray-950">
             <h2 className="font-bold flex items-center gap-2"><Package size={16} className="text-emerald-400"/>Parcel Router</h2>
             <p className="text-xs text-gray-500 mt-1">Find the fastest & cheapest delivery path</p>
@@ -271,9 +278,9 @@ export default function ParcelPage() {
         </div>
 
         {/* CENTER: Map */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-h-[350px] lg:min-h-0 border-b lg:border-b-0 border-gray-800">
           {selectedRoute && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-full px-4 py-1.5 text-sm flex items-center gap-2">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-full px-4 py-1.5 text-sm flex items-center gap-2 max-w-[90vw] overflow-x-auto whitespace-nowrap scrollbar-hide">
               {selectedRoute.path.map((c: string, i: number) => (
                 <React.Fragment key={i}>
                   <span className={i === 0 || i === selectedRoute.path.length-1 ? "font-bold text-white" : "text-gray-300"}>{c}</span>
@@ -286,7 +293,7 @@ export default function ParcelPage() {
         </div>
 
         {/* RIGHT: Route Results */}
-        <div className="w-80 border-l border-gray-800 flex flex-col bg-gray-900 shrink-0">
+        <div ref={resultsRef} className="w-full lg:w-80 border-l-0 lg:border-l border-gray-800 flex flex-col bg-gray-900 shrink-0 h-auto lg:h-full overflow-y-auto min-h-[300px]">
           <div className="p-4 border-b border-gray-800 bg-gray-950">
             <h2 className="font-bold text-sm">Route Options</h2>
             {routeResult && (

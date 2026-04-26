@@ -140,18 +140,19 @@ export default function BulkPage() {
   });
 
   return (
-    <div className="flex h-[calc(100vh-48px)] overflow-hidden bg-gray-950 text-white">
-      {/* LEFT COLUMN */}
-      <div className="w-80 border-r border-gray-800 flex flex-col bg-gray-900 z-10 shadow-xl">
-        <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950">
-          <h2 className="font-bold flex items-center gap-2"><TruckIcon size={18} className="text-blue-500"/> Bulk Logistics</h2>
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-56px)] overflow-hidden bg-gray-950 text-white">
+      {/* LEFT COLUMN - Truck List */}
+      <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-gray-800 flex flex-col bg-gray-900 z-10 shadow-xl h-48 lg:h-full shrink-0">
+        <div className="p-3 lg:p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950">
+          <h2 className="font-bold text-sm lg:text-base flex items-center gap-2"><TruckIcon size={18} className="text-blue-500"/> Bulk Logistics</h2>
+          <Badge variant="outline" className="lg:hidden">{trucks.length} Trucks</Badge>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-x-auto lg:overflow-y-auto p-3 lg:p-4 flex flex-row lg:flex-col gap-3 lg:space-y-3">
           {trucks.map(t => (
             <div 
               key={t.id} 
               onClick={() => selectTruck(t)}
-              className={`p-3 rounded-lg border cursor-pointer transition-colors ${selectedTruck?.id === t.id ? 'border-blue-500 bg-blue-900/20' : 'border-gray-700 hover:border-gray-500 bg-gray-800/50'}`}
+              className={`p-3 rounded-lg border cursor-pointer transition-all min-w-[240px] lg:min-w-0 shrink-0 ${selectedTruck?.id === t.id ? 'border-blue-500 bg-blue-900/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-gray-700 hover:border-gray-500 bg-gray-800/50'}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className="font-bold">{t.id}</span>
@@ -174,7 +175,7 @@ export default function BulkPage() {
             </div>
           ))}
         </div>
-        <div className="p-3 border-t border-gray-800 bg-gray-950">
+        <div className="hidden lg:block p-3 border-t border-gray-800 bg-gray-950">
            <StatsPanel stats={[
              { label: "Total", value: trucks.length },
              { label: "Delayed", value: trucks.filter(t=>t.status==='delayed' || t.status==='critical').length, color: 'text-red-400'}
@@ -182,24 +183,30 @@ export default function BulkPage() {
         </div>
       </div>
 
-      {/* CENTER MAP */}
-      <div className="flex-1 relative">
-        <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <Button variant="destructive" onClick={simStorm} className="shadow-lg"><CloudLightning size={16} className="mr-2"/> Simulate Storm</Button>
-          <Button onClick={simReset} className="shadow-lg bg-gray-700 hover:bg-gray-600"><RefreshCcw size={16} className="mr-2"/> Reset</Button>
-        </div>
-        <MapView markers={markers} routes={routes} center={[21.0, 78.0]} zoom={5} />
-      </div>
-
-      {/* RIGHT PANEL */}
-      {selectedTruck && (
-        <div className="w-96 border-l border-gray-800 bg-gray-900 z-10 shadow-bl overflow-y-auto w-[400px]">
-          <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950 sticky top-0 z-10">
-             <h2 className="font-bold">{selectedTruck.id} Details</h2>
-             <button onClick={clearSelection} className="text-gray-400 hover:text-white"><X size={18}/></button>
+      {/* CENTER MAP & RIGHT PANEL CONTAINER */}
+      <div className="flex-1 flex flex-col relative h-full min-h-0">
+        {/* MAP */}
+        <div className="flex-1 relative min-h-0">
+          <div className="absolute top-4 right-4 z-20 flex flex-col sm:flex-row gap-2">
+            <Button variant="destructive" onClick={simStorm} className="shadow-lg h-9 text-xs sm:text-sm"><CloudLightning size={16} className="mr-2"/> Simulate Storm</Button>
+            <Button onClick={simReset} className="shadow-lg bg-gray-700 hover:bg-gray-600 h-9 text-xs sm:text-sm"><RefreshCcw size={16} className="mr-2"/> Reset</Button>
           </div>
-          
-          <div className="p-5 space-y-6">
+          <MapView markers={markers} routes={routes} center={[21.0, 78.0]} zoom={5} />
+        </div>
+
+        {/* RIGHT PANEL - Overlay on mobile, Side-by-side on desktop */}
+        {selectedTruck && (
+          <div className="absolute inset-x-0 bottom-0 top-0 lg:relative lg:inset-auto lg:w-96 lg:h-full border-t lg:border-t-0 lg:border-l border-gray-800 bg-gray-950/95 lg:bg-gray-900 z-30 lg:z-10 shadow-2xl flex flex-col animate-in slide-in-from-bottom-full lg:slide-in-from-right-full duration-300">
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950 sticky top-0 z-10">
+               <h2 className="font-bold flex items-center gap-2">
+                 <TruckIcon size={18} className="text-blue-400"/>
+                 {selectedTruck.id} <span className="text-xs text-gray-500 font-normal">Details</span>
+               </h2>
+               <button onClick={clearSelection} className="p-1.5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                 <X size={20}/>
+               </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
              {/* General Info */}
              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-gray-500">Cargo:</span> <br/>{selectedTruck.cargo}</div>
@@ -289,6 +296,7 @@ export default function BulkPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

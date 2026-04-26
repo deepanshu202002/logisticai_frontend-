@@ -33,13 +33,13 @@ export default function Home() {
   ] : [];
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black p-6">
+    <div className="flex-1 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black p-4 lg:p-6 h-[calc(100vh-56px)]">
       
-      <div className="text-center mb-16 space-y-4 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+      <div className="text-center mb-10 lg:mb-16 space-y-3 lg:space-y-4 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
           LogisticAI
         </h1>
-        <p className="text-xl md:text-2xl text-gray-400 font-light">
+        <p className="text-lg md:text-2xl text-gray-400 font-light px-4">
           Predict. Reroute. Deliver.
         </p>
       </div>
