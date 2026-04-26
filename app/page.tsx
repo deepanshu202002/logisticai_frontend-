@@ -18,7 +18,7 @@ export default function Home() {
     const inv = setInterval(() => {
       fetchStats();
       fetchBookings();
-    }, 15000);
+    }, 30000);
     return () => clearInterval(inv);
   }, []);
 

@@ -68,7 +68,7 @@ export default function ParcelPage() {
 
   useEffect(() => {
     fetchData();
-    const inv = setInterval(fetchData, 10000);
+    const inv = setInterval(fetchData, 30000);
     return () => clearInterval(inv);
   }, []);
 

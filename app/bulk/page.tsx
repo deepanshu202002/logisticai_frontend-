@@ -44,7 +44,7 @@ export default function BulkPage() {
 
   useEffect(() => {
     fetchTrucks();
-    const inv = setInterval(fetchTrucks, 5000);
+    const inv = setInterval(fetchTrucks, 30000);
     return () => clearInterval(inv);
   }, []);
 

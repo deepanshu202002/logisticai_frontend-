@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { trucks, hubs, packages, riders, zones, alerts } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+export const revalidate = 10; // Cache stats for 10 seconds
+
 export async function GET() {
   const tRes = await db.select().from(trucks);
   const total_trucks = tRes.length;
