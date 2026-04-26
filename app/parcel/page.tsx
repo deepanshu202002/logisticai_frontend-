@@ -28,6 +28,8 @@ const CITY_COORDS: Record<string, [number, number]> = {
   "Kolkata":[22.5726,88.3639],"Pune":[18.5204,73.8567],"Ahmedabad":[23.0225,72.5714],
   "Delhi North":[28.7500,77.1200],"Delhi South":[28.5200,77.2100],
   "Mumbai West":[19.1000,72.8200],"Bangalore East":[12.9800,77.6500],
+  "Mumbai Hub":[19.0760,72.8777],"Delhi Hub":[28.6139,77.2090],
+  "Chennai Hub":[13.0827,80.2707],"Bangalore Hub":[12.9716,77.5946],
 };
 
 const fmt = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
@@ -54,7 +56,9 @@ export default function ParcelPage() {
       ]);
       setHubs(hRes.data);
       setPackages(pRes.data);
-    } catch(e) {}
+    } catch(e) {
+      toast.error("Failed to fetch live network data. Showing cached state.");
+    }
   };
 
   useEffect(() => {

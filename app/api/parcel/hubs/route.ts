@@ -3,6 +3,11 @@ import { db } from "@/db";
 import { hubs } from "@/db/schema";
 
 export async function GET() {
-  const result = await db.select().from(hubs);
-  return NextResponse.json(result);
+  try {
+    const result = await db.select().from(hubs);
+    return NextResponse.json(result);
+  } catch (e) {
+    console.error("Hubs fetch error:", e);
+    return NextResponse.json([]);
+  }
 }
