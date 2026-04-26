@@ -118,13 +118,16 @@ export default function BulkPage() {
   };
 
   // Build Map elements
-  const markers = Object.keys(CITY_COORDS).map(c => ({
-    id: c, lat: CITY_COORDS[c][0], lng: CITY_COORDS[c][1], color: "#4b5563",
-    popup: <div className="text-gray-900 font-bold">{c}</div>
-  })).concat(trucks.map(t => ({
-    id: t.id, lat: t.current_lat, lng: t.current_lng, color: t.status,
-    onClick: () => selectTruck(t)
-  })));
+  const markers: any[] = [
+    ...Object.keys(CITY_COORDS).map(c => ({
+      id: c, lat: CITY_COORDS[c][0], lng: CITY_COORDS[c][1], color: "#4b5563",
+      popup: <div className="text-gray-900 font-bold">{c}</div>
+    })),
+    ...trucks.map(t => ({
+      id: t.id, lat: t.current_lat, lng: t.current_lng, color: t.status,
+      onClick: () => selectTruck(t)
+    }))
+  ];
 
   const routes = trucks.map(t => {
     const routeArr = t.status === "rerouted" ? t.rerouted_route : t.current_route;
@@ -219,7 +222,7 @@ export default function BulkPage() {
                    <span>{(selectedTruck.prediction.delay_probability * 100).toFixed(1)}%</span>
                  </div>
                  <Progress value={selectedTruck.prediction.delay_probability * 100} className="h-2 bg-gray-700" 
-                    indicatorcolor={selectedTruck.prediction.delay_probability > 0.7 ? "bg-red-500" : "bg-blue-500"} />
+                    indicatorClassName={selectedTruck.prediction.delay_probability > 0.7 ? "bg-red-500" : "bg-blue-500"} />
                </div>
              )}
 
