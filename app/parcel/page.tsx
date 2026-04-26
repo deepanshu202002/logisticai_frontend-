@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Package, ArrowRight, Zap, DollarSign, Clock, AlertTriangle, RefreshCcw, Bell, CheckCircle, Settings2, Cloud, Bot } from "lucide-react";
+import { Package, ArrowRight, Zap, DollarSign, Clock, AlertTriangle, RefreshCcw, Bell, CheckCircle, Settings2, Cloud, Bot, Calendar, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import MapView from "@/components/MapView";
@@ -9,6 +9,8 @@ import StatsPanel from "@/components/StatsPanel";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
+import { calculateETA } from "@/lib/etaUtils";
+import { format } from "date-fns";
 
 const API_BASE = "/api";
 
@@ -47,6 +49,9 @@ export default function ParcelPage() {
   const [stormActive, setStormActive] = useState(false);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingResult, setBookingResult] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -113,6 +118,27 @@ export default function ParcelPage() {
       toast.error("Routing failed — check that the Python server is running");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBook = async (route: any) => {
+    setIsBooking(true);
+    setBookingResult(null);
+    try {
+      const eta = calculateETA(route.distance_km, priority, route.path, hubs);
+      const res = await axios.post("/api/parcel/book", {
+        type: 'parcel',
+        seller_city: sellerCity,
+        buyer_city: buyerCity,
+        route,
+        priority,
+        weight_kg: weightKg,
+        eta_date: eta.arrivalDate
+      });
+      setBookingResult(res.data);
+    } catch (err) {
+      toast.error("Booking failed. Please try again.");
+      setIsBooking(false);
     }
   };
 
@@ -391,6 +417,45 @@ export default function ParcelPage() {
                     </div>
                   </div>
 
+                  {/* ETA Display - Timeline Stepper */}
+                  {(() => {
+                    const eta = calculateETA(r.distance_km, priority, r.path, hubs, r.delay_minutes || 0);
+                    return (
+                      <div className="mt-3 bg-gray-950/60 border border-gray-800 rounded-xl p-3 space-y-3">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-1.5 mb-1.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Transit Timeline</span>
+                          <span className="text-[10px] text-blue-400 font-bold">{eta.days} Days</span>
+                        </div>
+
+                        <div className="relative space-y-4">
+                          <div className="absolute left-[5px] top-1 bottom-1 w-[1px] bg-gray-800"></div>
+                          
+                          <div className="relative flex items-center gap-3">
+                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-gray-950 z-10"></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] text-gray-500 leading-none mb-0.5">START: DEPARTURE</span>
+                              <span className="text-[11px] text-white font-semibold leading-none">{format(new Date(), "MMM d, HH:mm")}</span>
+                            </div>
+                          </div>
+
+                          <div className="relative flex items-center gap-3">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-gray-950 z-10"></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] text-emerald-500 leading-none mb-0.5">END: EST. ARRIVAL</span>
+                              <span className="text-[11px] text-white font-bold leading-none">{eta.formattedArrival}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {eta.weatherDelay && (
+                          <div className="text-[9px] text-amber-400 flex items-center gap-1.5 pt-1">
+                            <AlertTriangle size={10}/> Factors: Weather Disruptions
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Cost breakdown */}
                   <div className="mt-2 text-[10px] text-gray-500 border-t border-gray-700 pt-2 space-y-0.5">
                     <div className="flex justify-between"><span>Freight</span><span className="text-gray-300">{fmt(r.cost_breakdown.freight_inr)}</span></div>
@@ -434,6 +499,15 @@ export default function ParcelPage() {
                       ✓ Avoided overloaded: {r.skipped_hubs.join(", ")}
                     </div>
                   )}
+
+                  {isSelected && (
+                    <Button 
+                      onClick={(e) => { e.stopPropagation(); handleBook(r); }}
+                      className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-9 shadow-lg shadow-emerald-950/20"
+                    >
+                      <Package size={14} className="mr-2"/> Book This Route
+                    </Button>
+                  )}
                 </div>
               );
             })}
@@ -447,6 +521,61 @@ export default function ParcelPage() {
         { label: "Stuck",          value: packages.filter(p => p.status==="stuck").length, color: "text-red-400" },
         { label: "Hub Cities",     value: HUB_CITIES.length },
       ]}/>
+
+      {/* Booking Modal */}
+      {isBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+             {!bookingResult ? (
+               <div className="text-center py-8">
+                 <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                 <h2 className="text-xl font-bold text-white">Confirming Booking...</h2>
+                 <p className="text-gray-400 mt-2">Securing slot in sorting facilities.</p>
+               </div>
+             ) : (
+               <div className="space-y-6">
+                 <div className="flex justify-between items-start">
+                   <div className="bg-emerald-500/20 p-3 rounded-full">
+                     <CheckCircle size={32} className="text-emerald-500"/>
+                   </div>
+                   <button onClick={() => setIsBooking(false)} className="text-gray-500 hover:text-white"><X/></button>
+                 </div>
+                 
+                 <div>
+                   <h2 className="text-2xl font-bold text-white">Parcel Registered!</h2>
+                   <p className="text-gray-400">Your shipment is ready for pickup.</p>
+                 </div>
+
+                 <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 space-y-3">
+                   <div>
+                     <div className="text-xs text-gray-500 uppercase">Tracking ID</div>
+                     <div className="text-lg font-mono font-bold text-emerald-400 tracking-wider">{bookingResult.tracking_id}</div>
+                   </div>
+                   <div className="flex justify-between border-t border-gray-800 pt-3 text-sm">
+                     <div>
+                       <div className="text-xs text-gray-500 uppercase">Est. Delivery</div>
+                       <div className="font-semibold text-white">
+                         {calculateETA(selectedRoute.distance_km, priority, selectedRoute.path, hubs).formattedArrival}
+                       </div>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-xs text-gray-500 uppercase">Status</div>
+                       <div className="font-semibold text-emerald-400 px-2 py-0.5 bg-emerald-900/30 rounded">Booked</div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <button 
+                  onClick={() => window.location.href = `/track?id=${bookingResult.tracking_id}`}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg shadow-lg flex items-center justify-center gap-2"
+                 >
+                   Go to Live Tracking <ArrowRight size={18}/>
+                 </button>
+               </div>
+             )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

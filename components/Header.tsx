@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, LayoutDashboard, Menu, X, Ship } from "lucide-react";
+import { Truck, Package, LayoutDashboard, Menu, X, Ship, MapPin } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Bulk Logistics", href: "/bulk", icon: Truck },
   { label: "Parcel Network", href: "/parcel", icon: Package },
+  { label: "Track Shipment", href: "/track", icon: MapPin },
 ];
 
 export default function Header() {

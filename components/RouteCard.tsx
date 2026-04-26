@@ -1,19 +1,51 @@
 import React from "react";
-import { ArrowRight, MapPin, CheckCircle, TrendingDown, IndianRupee, AlertTriangle } from "lucide-react";
+import { ArrowRight, MapPin, CheckCircle, TrendingDown, IndianRupee, AlertTriangle, Clock, Calendar, Check, Package, X, Truck as TruckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { calculateETA } from "@/lib/etaUtils";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import axios from "axios";
 
 export default function RouteCard({
   routeData,
   onApply,
-  isApplied = false
+  isApplied = false,
+  hubsData = []
 }: {
   routeData: any,
   onApply: () => void,
-  isApplied?: boolean
+  isApplied?: boolean,
+  hubsData?: any[]
 }) {
+  const [isBooking, setIsBooking] = React.useState(false);
+  const [bookingResult, setBookingResult] = React.useState<any>(null);
+
   if (!routeData || !routeData.primary) return null;
 
   const { primary, baseline, alternatives, disruptions_avoided, recommendation, cost_saving_inr, cost_saving_pct } = routeData;
+  
+  // Calculate ETA for Primary Route (Include existing delay if truck is already delayed)
+  const eta = calculateETA(primary.distance_km, "standard", primary.path, hubsData, routeData.delay_minutes || 0);
+
+  const handleBook = async (type: string) => {
+    setIsBooking(true);
+    setBookingResult(null);
+    try {
+      const res = await axios.post("/api/parcel/book", {
+        type,
+        seller_city: primary.path[0],
+        buyer_city: primary.path[primary.path.length - 1],
+        route: primary,
+        priority: "standard",
+        weight_kg: primary.weight_tons ? primary.weight_tons * 1000 : 5000,
+        eta_date: eta.arrivalDate
+      });
+      setBookingResult(res.data);
+    } catch (err) {
+      toast.error("Booking failed. Please try again.");
+      setIsBooking(false);
+    }
+  };
 
   const isRerouted    = disruptions_avoided && disruptions_avoided.length > 0;
   const shouldReroute = recommendation === "reroute";
@@ -116,6 +148,42 @@ export default function RouteCard({
           </div>
         )}
 
+        {/* Delivery Timeline */}
+        <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-4 space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-800 pb-2 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Shipment Timeline</span>
+            <Badge variant="outline" className="text-[10px] bg-blue-500/5 text-blue-400 border-blue-500/20">
+              {eta.days} Days Transit
+            </Badge>
+          </div>
+          
+          <div className="relative space-y-6">
+            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gray-800"></div>
+            
+            <div className="relative flex items-start gap-4">
+              <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-gray-950 z-10 mt-0.5"></div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase font-bold">Start: Departure</div>
+                <div className="text-sm text-white font-semibold">{format(new Date(), "MMM d, HH:mm")}</div>
+              </div>
+            </div>
+
+            <div className="relative flex items-start gap-4">
+              <div className="w-4 h-4 rounded-full bg-emerald-500 border-4 border-gray-950 z-10 mt-0.5"></div>
+              <div>
+                <div className="text-xs text-emerald-500 uppercase font-bold">End: Est. Arrival</div>
+                <div className="text-sm text-white font-bold">{eta.formattedArrival}</div>
+              </div>
+            </div>
+          </div>
+
+          {eta.weatherDelay && (
+             <div className="bg-amber-900/20 border border-amber-500/20 rounded p-2 text-[10px] text-amber-400 flex items-center gap-2">
+               <AlertTriangle size={12}/> 🌩 Weather conditions factored into ETA (+1 day)
+             </div>
+          )}
+        </div>
+
         {/* Disruptions Avoided */}
         {isRerouted && shouldReroute && (
           <div className="text-xs space-y-1">
@@ -138,11 +206,72 @@ export default function RouteCard({
           </button>
         )}
         {shouldReroute && isApplied && (
-          <div className="w-full bg-green-900/20 border border-green-500/30 text-green-400 font-medium py-2 px-4 rounded flex items-center justify-center gap-2 text-sm">
-            <CheckCircle size={15} /> Reroute Applied Successfully
+          <div className="space-y-2">
+            <div className="w-full bg-green-900/20 border border-green-500/30 text-green-400 font-medium py-2 px-4 rounded flex items-center justify-center gap-2 text-sm">
+              <CheckCircle size={15} /> Reroute Applied Successfully
+            </div>
+            <button 
+              onClick={() => handleBook("bulk")}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95"
+            >
+              <Package size={16}/> Book Shipment Now
+            </button>
           </div>
         )}
       </div>
+
+      {/* Booking Modal */}
+      {isBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+             {!bookingResult ? (
+               <div className="text-center py-8">
+                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                 <h2 className="text-xl font-bold text-white">Confirming Booking...</h2>
+                 <p className="text-gray-400 mt-2">Generating tracking ID and securing assets.</p>
+               </div>
+             ) : (
+               <div className="space-y-6">
+                 <div className="flex justify-between items-start">
+                   <div className="bg-emerald-500/20 p-3 rounded-full">
+                     <CheckCircle size={32} className="text-emerald-500"/>
+                   </div>
+                   <button onClick={() => setIsBooking(false)} className="text-gray-500 hover:text-white"><X/></button>
+                 </div>
+                 
+                 <div>
+                   <h2 className="text-2xl font-bold text-white">Shipment Locked!</h2>
+                   <p className="text-gray-400">Your bulk freight has been registered.</p>
+                 </div>
+
+                 <div className="bg-gray-950 p-4 rounded-lg border border-gray-800 space-y-3">
+                   <div>
+                     <div className="text-xs text-gray-500 uppercase">Tracking ID</div>
+                     <div className="text-lg font-mono font-bold text-blue-400 tracking-wider">{bookingResult.tracking_id}</div>
+                   </div>
+                   <div className="flex justify-between border-t border-gray-800 pt-3">
+                     <div>
+                       <div className="text-xs text-gray-500 uppercase">Est. Delivery</div>
+                       <div className="font-semibold text-white">{eta.formattedArrival}</div>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-xs text-gray-500 uppercase">Status</div>
+                       <div className="font-semibold text-emerald-400">Booked</div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <button 
+                  onClick={() => window.location.href = `/track?id=${bookingResult.tracking_id}`}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg flex items-center justify-center gap-2"
+                 >
+                   Go to Live Tracking <ArrowRight size={18}/>
+                 </button>
+               </div>
+             )}
+          </div>
+        </div>
+      )}
 
       {/* Baseline / Alternative (collapsed) */}
       {baseline && shouldReroute && (

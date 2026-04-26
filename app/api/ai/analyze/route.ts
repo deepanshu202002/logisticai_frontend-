@@ -78,11 +78,11 @@ The message should apologize for the delay, briefly mention the reason without s
       return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    return NextResponse.json({ analysis: text, model: "gemini-1.5-pro" });
+    return NextResponse.json({ analysis: text, model: "gemini-1.5-flash" });
   } catch (e: any) {
     // console.error("Gemini error:", e?.message ?? e); // Muted to keep terminal clean during mock fallback mode
 

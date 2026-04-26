@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { CloudRain, CloudLightning, ShieldAlert, Navigation, Settings2, Truck as TruckIcon, X, CheckCircle, RefreshCcw, Bot, MessageSquare, Copy, Mail } from "lucide-react";
+import { format, addDays } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import MapView from "@/components/MapView";
@@ -166,11 +167,18 @@ export default function BulkPage() {
               <div className="text-xs text-gray-400 mb-2 truncate">
                 {t.origin} → {t.destination} <br/> Driver: {t.driver_name}
               </div>
-              <div className="flex gap-2">
-                {t.weather_condition === "storm" && <CloudLightning size={14} className="text-red-400"/>}
-                {t.weather_condition === "rain" && <CloudRain size={14} className="text-blue-300"/>}
-                {t.traffic_level === "blocked" && <ShieldAlert size={14} className="text-red-500"/>}
-                {t.delay_minutes > 0 && <span className="text-xs text-red-400">{t.delay_minutes}m delay</span>}
+              <div className="flex justify-between items-end">
+                <div className="flex gap-2">
+                  {t.weather_condition === "storm" && <CloudLightning size={14} className="text-red-400"/>}
+                  {t.weather_condition === "rain" && <CloudRain size={14} className="text-blue-300"/>}
+                  {t.traffic_level === "blocked" && <ShieldAlert size={14} className="text-red-500"/>}
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold">Est. Arrival</span>
+                  <span className="text-[11px] text-blue-400 font-bold">
+                    {format(addDays(new Date(t.created_at || new Date()), (t.delay_minutes > 60 ? 3.5 : 2.1)), "MMM d")}
+                  </span>
+                </div>
               </div>
             </div>
           ))}

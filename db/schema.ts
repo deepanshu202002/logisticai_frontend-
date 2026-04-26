@@ -99,3 +99,25 @@ export const routeHistories = pgTable("route_history", {
   applied: boolean("applied").default(false),
   created_at: timestamp("created_at").defaultNow(),
 });
+
+export const bookings = pgTable("bookings", {
+  id: text("id").primaryKey(), // HBS-YYYYMMDD-XXXXX
+  type: text("type").notNull(), // 'bulk' or 'parcel'
+  seller_city: text("seller_city"),
+  buyer_city: text("buyer_city"),
+  route: jsonb("route").notNull(),
+  priority: text("priority").default("standard"),
+  weight_kg: doublePrecision("weight_kg"),
+  eta_date: timestamp("eta_date").notNull(),
+  status: text("status").default("booked"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const trackingEvents = pgTable("tracking_events", {
+  id: serial("id").primaryKey(),
+  booking_id: text("booking_id").references(() => bookings.id),
+  status: text("status").notNull(),
+  location: text("location"),
+  message: text("message"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
