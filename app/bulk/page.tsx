@@ -184,7 +184,7 @@ export default function BulkPage() {
       </div>
 
       {/* CENTER MAP & RIGHT PANEL CONTAINER */}
-      <div className="flex-1 flex flex-col relative h-full min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row relative h-full min-h-0">
         {/* MAP */}
         <div className="flex-1 relative min-h-0">
           <div className="absolute top-4 right-4 z-20 flex flex-col sm:flex-row gap-2">
