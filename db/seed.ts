@@ -1,5 +1,3 @@
-import { config } from "dotenv";
-config({ path: ".env.local" });
 import { db } from "./index";
 import { trucks, hubs, packages, riders, zones, predictions, routeHistories, alerts } from "./schema";
 

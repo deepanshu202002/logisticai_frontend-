@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "drizzle-kit push",
-    "db:seed": "npx tsx db/seed.ts",
+    "db:seed": "npx tsx --env-file=.env.local db/seed.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
