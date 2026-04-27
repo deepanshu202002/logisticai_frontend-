@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Package, ArrowRight, Zap, DollarSign, Clock, AlertTriangle, RefreshCcw, Bell, CheckCircle, Settings2, Cloud, Bot, Calendar, X } from "lucide-react";
+import { Package, ArrowRight, Zap, DollarSign, Clock, AlertTriangle, RefreshCcw, RefreshCw, Bell, CheckCircle, Settings2, Cloud, Bot, Calendar, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import MapView from "@/components/MapView";
@@ -151,10 +151,15 @@ export default function ParcelPage() {
       toast.success(res.data.message);
       
       // Visual feedback: Show flows for 3 seconds
-      const overloaded = hubs.filter(h => (h.current_load / h.capacity) > 0.9);
-      if (overloaded.length > 0) {
+      const overloaded = hubs.filter(h => (h.current_load / (h.capacity || 1000)) > 0.9);
+      const healthy = hubs.find(h => (h.current_load / (h.capacity || 1000)) < 0.6);
+
+      if (overloaded.length > 0 && healthy) {
         const flows = overloaded.map(h => ({
-          positions: [CITY_COORDS[h.id] || [0,0], CITY_COORDS["Delhi"] || [0,0]], 
+          positions: [
+            [h.lat || 0, h.lng || 0], 
+            [healthy.lat || 0, healthy.lng || 0]
+          ], 
           color: "#3b82f6"
         }));
         setRebalancingFlows(flows);
@@ -240,6 +245,17 @@ export default function ParcelPage() {
           );
         })}
         <div className="ml-auto flex gap-2 shrink-0">
+          <Button size="sm" variant="outline" onClick={async () => {
+            if(confirm("Reset all network data to default?")) {
+              const res = await axios.post(`${API_BASE}/simulate/reset`);
+              if(res.data.success) {
+                toast.success("System reset to baseline.");
+                fetchData();
+              }
+            }
+          }} className="text-xs h-7 border-gray-700 bg-gray-900 hover:bg-gray-800 text-gray-400">
+            <RefreshCw size={12} className="mr-1"/>Reset System
+          </Button>
           <Button size="sm" variant="destructive" onClick={simPeakSale} className="text-xs h-7"><Bell size={12} className="mr-1"/>Peak Sale</Button>
           {!stormActive
             ? <Button size="sm" onClick={simHubStorm} className="text-xs h-7 bg-blue-700 hover:bg-blue-600">
