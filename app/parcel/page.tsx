@@ -52,6 +52,8 @@ export default function ParcelPage() {
   
   const [isBooking, setIsBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
+  const [rebalancingFlows, setRebalancingFlows] = useState<any[]>([]);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -143,11 +145,30 @@ export default function ParcelPage() {
   };
 
   const autoRebalance = async () => {
+    setIsOptimizing(true);
     try {
       const res = await axios.post(`${API_BASE}/parcel/rebalance`);
       toast.success(res.data.message);
-      fetchData();
-    } catch(e) { toast.error("Rebalance failed"); }
+      
+      // Visual feedback: Show flows for 3 seconds
+      const overloaded = hubs.filter(h => (h.current_load / h.capacity) > 0.9);
+      if (overloaded.length > 0) {
+        const flows = overloaded.map(h => ({
+          positions: [CITY_COORDS[h.id] || [0,0], CITY_COORDS["Delhi"] || [0,0]], 
+          color: "#3b82f6"
+        }));
+        setRebalancingFlows(flows);
+      }
+
+      setTimeout(() => {
+        setRebalancingFlows([]);
+        setIsOptimizing(false);
+        fetchData();
+      }, 3000);
+    } catch(e) { 
+      toast.error("Rebalance failed"); 
+      setIsOptimizing(false);
+    }
   };
 
   const simPeakSale = async () => {
@@ -319,7 +340,34 @@ export default function ParcelPage() {
               ))}
             </div>
           )}
-          <MapView markers={hubMarkers} routes={routeLines} center={[20.5, 78.5]} zoom={5}/>
+          <MapView 
+            markers={hubMarkers} 
+            routes={routeLines} 
+            activeFlows={rebalancingFlows}
+            center={[20.5, 78.5]} 
+            zoom={5}
+          />
+          
+          {/* Optimization Overlay */}
+          {isOptimizing && (
+            <div className="absolute inset-0 z-30 bg-blue-900/10 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500">
+              <div className="bg-gray-900/90 border border-blue-500/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(59,130,246,0.3)] flex flex-col items-center gap-4 max-w-xs text-center">
+                <div className="relative w-16 h-16">
+                  <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <RefreshCcw size={24} className="absolute inset-0 m-auto text-blue-400 animate-pulse"/>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Optimizing Network</h3>
+                  <p className="text-xs text-blue-300/70 font-medium uppercase tracking-widest mt-1">Rebalancing Cargo Loads</p>
+                </div>
+                <div className="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-full animate-[progress_3s_ease-in-out]"></div>
+                </div>
+                <p className="text-[10px] text-gray-500 italic">Redistributing pending parcels to underutilized hubs...</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT: Route Results */}
