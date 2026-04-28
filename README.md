@@ -69,7 +69,7 @@ LogisticAI flips the model from **reactive** to **predictive**. It scores delay 
 - **Render.com** — FastAPI ML service (free tier)
 
 ### AI
-- **Google Gemini Flash 1.5** — route recommendations + customer SMS drafting
+- **Google Gemini Flash 2.5** — route recommendations + customer SMS drafting
 - **Google AI Studio** — API key management
 
 ---
