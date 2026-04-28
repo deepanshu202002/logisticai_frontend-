@@ -150,8 +150,7 @@ logisticai/
 
 This project was built for the **Google Solution Challenge 2026** under the **Build with AI** track. It uses Google Gemini Flash as a core part of the solution — not as a wrapper, but as a reasoning layer that reads live logistics state and produces actionable decisions in natural language.
 
-**Team:** LogisticAI  
-**Team Leader:** Nikhil Saraf
+
 
 ---
 
